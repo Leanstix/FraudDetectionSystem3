@@ -87,7 +87,7 @@ class FeatureStore:
             axis=1,
         )
 
-        pair_ref = set((ref["sender_id"].fillna(""), ref["recipient_id"].fillna("")))
+        pair_ref = set(zip(ref["sender_id"].fillna(""), ref["recipient_id"].fillna("")))
         tgt["pair_key"] = list(zip(tgt["sender_id"].fillna(""), tgt["recipient_id"].fillna("")))
         tgt["pair_seen_in_reference"] = tgt["pair_key"].map(lambda p: 1 if p in pair_ref else 0)
         tgt["new_sender_recipient_pair"] = 1 - tgt["pair_seen_in_reference"]
@@ -149,31 +149,25 @@ class FeatureStore:
             ignore_index=True,
         ).sort_values(["sender_id", "timestamp"])
 
+        out_by_id = out.set_index("transaction_id")
         for sender, grp in combined.groupby("sender_id", dropna=False):
-            g = grp.set_index("timestamp").sort_index()
-            c1h = (g["is_target"].rolling("1h").count() - 1).clip(lower=0)
-            c24h = (g["is_target"].rolling("24h").count() - 1).clip(lower=0)
-            c7d = (g["is_target"].rolling("7D").count() - 1).clip(lower=0)
-            burst = (g["is_target"].rolling("10min").count() - 1).clip(lower=0)
-
-            # Assign only to target timestamps for this sender.
-            tgt_rows = tgt[tgt["sender_id"].eq(sender)].sort_values("timestamp")
-            for idx, row in tgt_rows.iterrows():
+            grp = grp.sort_values("timestamp")
+            tx_times = grp["timestamp"].tolist()
+            for _, row in tgt[tgt["sender_id"].eq(sender)].iterrows():
+                tx_id = row["transaction_id"]
                 ts = row["timestamp"]
-                if pd.isna(ts):
+                if pd.isna(ts) or tx_id not in out_by_id.index:
                     continue
-                mask = (combined["sender_id"].eq(sender)) & (combined["timestamp"].eq(ts))
-                subset = combined[mask]
-                if subset.empty:
-                    continue
-                loc = subset.index[-1]
-                out_idx = out.index[out["transaction_id"].eq(row["transaction_id"])]
-                if len(out_idx) == 0:
-                    continue
-                out.loc[out_idx, "txn_count_past_1h"] = float(c1h.iloc[g.index.get_indexer([ts], method="pad")[0]]) if not c1h.empty else 0.0
-                out.loc[out_idx, "txn_count_past_24h"] = float(c24h.iloc[g.index.get_indexer([ts], method="pad")[0]]) if not c24h.empty else 0.0
-                out.loc[out_idx, "txn_count_past_7d"] = float(c7d.iloc[g.index.get_indexer([ts], method="pad")[0]]) if not c7d.empty else 0.0
-                out.loc[out_idx, "burst_count_10min"] = float(burst.iloc[g.index.get_indexer([ts], method="pad")[0]]) if not burst.empty else 0.0
+                c1h = sum(1 for t in tx_times if pd.notna(t) and t < ts and t >= ts - pd.Timedelta(hours=1))
+                c24h = sum(1 for t in tx_times if pd.notna(t) and t < ts and t >= ts - pd.Timedelta(hours=24))
+                c7d = sum(1 for t in tx_times if pd.notna(t) and t < ts and t >= ts - pd.Timedelta(days=7))
+                burst = sum(1 for t in tx_times if pd.notna(t) and t < ts and t >= ts - pd.Timedelta(minutes=10))
+                out_by_id.at[tx_id, "txn_count_past_1h"] = float(c1h)
+                out_by_id.at[tx_id, "txn_count_past_24h"] = float(c24h)
+                out_by_id.at[tx_id, "txn_count_past_7d"] = float(c7d)
+                out_by_id.at[tx_id, "burst_count_10min"] = float(burst)
+
+        out = out_by_id.reset_index()
 
         # Time since previous transaction including reference history.
         for sender, grp in combined.groupby("sender_id", dropna=False):

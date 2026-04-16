@@ -31,6 +31,7 @@ def test_submission_output_constraints_and_ordering(tmp_path: Path):
     text.encode("ascii")
     assert lines == ["a", "b", "d"]
     assert result.flagged_count == 3
+    assert all(isinstance(v, str) and v for v in result.transaction_ids)
 
 
 def test_submission_ordering_is_deterministic(tmp_path: Path):
