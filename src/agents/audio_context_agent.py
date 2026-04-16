@@ -23,7 +23,9 @@ class AudioContextAgent(BaseAgent):
         return scored
 
     def run(self, features_df: pd.DataFrame, audio_df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
-        out = features_df[["transaction_id", "timestamp", "sender_full_name"]].copy()
+        sender_name_col = "sender_full_name" if "sender_full_name" in features_df.columns else "sender_user_full_name"
+        out = features_df[["transaction_id", "timestamp", sender_name_col]].copy()
+        out = out.rename(columns={sender_name_col: "sender_full_name"})
         out["audio_context_score"] = 0.0
         out["audio_context_reason"] = "no_audio_context"
 

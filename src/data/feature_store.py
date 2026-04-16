@@ -300,7 +300,9 @@ class FeatureStore:
         return tx
 
     def build_audio_features(self, target_transactions_df: pd.DataFrame, audio_df: pd.DataFrame, users_df: pd.DataFrame) -> pd.DataFrame:
-        tx = target_transactions_df[["transaction_id", "timestamp", "sender_user_idx", "sender_full_name"]].copy()
+        sender_name_col = "sender_full_name" if "sender_full_name" in target_transactions_df.columns else "sender_user_full_name"
+        tx = target_transactions_df[["transaction_id", "timestamp", "sender_user_idx", sender_name_col]].copy()
+        tx = tx.rename(columns={sender_name_col: "sender_full_name"})
         tx["audio_activity_score"] = 0.0
         tx["audio_proximity_score"] = 0.0
         tx["recent_audio_event_by_linked_user"] = 0.0

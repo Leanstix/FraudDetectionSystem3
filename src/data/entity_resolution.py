@@ -158,7 +158,7 @@ class EntityResolver:
 
         for idx, row in out.iterrows():
             tx_ts = row.get("timestamp")
-            sender_name = str(row.get("sender_full_name") or "").strip().lower()
+            sender_name = str(row.get("sender_full_name") or row.get("sender_user_full_name") or "").strip().lower()
             if pd.isna(tx_ts) or not sender_name:
                 continue
 
