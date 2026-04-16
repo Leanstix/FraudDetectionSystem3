@@ -12,11 +12,11 @@ def communication_risk_prompt(thread_text: str) -> str:
     )
 
 
-def communication_summary_prompt(thread_text: str) -> str:
+def audio_summary_prompt(audio_context: str) -> str:
     return (
-        "Summarize the communication thread as compact JSON only. "
-        "Include keys: risk_score, urgency_score, payment_bait_score, credential_theft_score, explanation. "
-        "Scores must be 0..1. explanation must be <= 220 chars. "
+        "You are analyzing an audio event in a fraud investigation. "
+        "Return compact JSON only with keys: risk_score, confidence, explanation. "
+        "Scores must be floats 0..1 and explanation must be <= 220 chars. "
         "No markdown.\n\n"
-        f"THREAD:\n{thread_text[:12000]}"
+        f"AUDIO_CONTEXT:\n{audio_context[:12000]}"
     )

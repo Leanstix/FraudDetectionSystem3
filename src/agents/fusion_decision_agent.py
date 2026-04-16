@@ -29,6 +29,7 @@ class FusionDecisionAgent(BaseAgent):
             "temporal_sequence_score",
             "geospatial_score",
             "communication_risk_score",
+            "audio_context_score",
             "novelty_drift_score",
         ]
         for col in score_cols:
@@ -43,6 +44,7 @@ class FusionDecisionAgent(BaseAgent):
             ("temporal_sequence_score", "temporal_sequence_reason"),
             ("geospatial_score", "geospatial_reason"),
             ("communication_risk_score", "communication_risk_reason"),
+            ("audio_context_score", "audio_context_reason"),
             ("novelty_drift_score", "novelty_drift_reason"),
         ]
         top_reasons: list[str] = []

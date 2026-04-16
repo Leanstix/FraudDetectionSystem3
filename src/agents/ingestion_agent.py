@@ -20,10 +20,12 @@ class DataIngestionAgent(BaseAgent):
         locations = self.normalizer.normalize_locations(self.loader.load_locations())
         sms = self.normalizer.normalize_sms(self.loader.load_sms())
         mails = self.normalizer.normalize_mails(self.loader.load_mails())
+        audio = self.normalizer.normalize_audio(self.loader.load_audio_files())
         return {
             "transactions": transactions,
             "users": users,
             "locations": locations,
             "sms": sms,
             "mails": mails,
+            "audio": audio,
         }
