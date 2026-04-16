@@ -92,6 +92,11 @@ class FeatureStore:
         tgt["pair_seen_in_reference"] = tgt["pair_key"].map(lambda p: 1 if p in pair_ref else 0)
         tgt["new_sender_recipient_pair"] = 1 - tgt["pair_seen_in_reference"]
 
+        method_key = tgt["sender_id"].fillna("") + "::" + tgt["payment_method"].fillna("")
+        type_key = tgt["sender_id"].fillna("") + "::" + tgt["transaction_type"].fillna("")
+        tgt["new_payment_method_for_sender"] = (method_key.groupby(method_key).cumcount() == 0).astype(int)
+        tgt["new_transaction_type_for_sender"] = (type_key.groupby(type_key).cumcount() == 0).astype(int)
+
         sender_method_ref = (
             ref.groupby("sender_id", dropna=False)["payment_method"]
             .apply(lambda s: set(v for v in s.fillna("").astype(str) if v))
