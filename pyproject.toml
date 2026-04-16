@@ -1,0 +1,9 @@
+[project]
+name = "reply-mirror-fraud-agent"
+version = "0.1.0"
+description = "Agent-based fraud detection pipeline for Reply Mirror AI Agent Challenge"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
