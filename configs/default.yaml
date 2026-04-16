@@ -2,12 +2,17 @@ team_name: reply-mirror-team
 default_model: openai/gpt-4o-mini
 default_temperature: 0.2
 llm_enabled: true
+audio_transcription_enabled: false
+audio_transcription_engine: none
 llm_cache_dir: cache/llm
 random_seed: 42
 output_dir: outputs
 cache_dir: cache
 reference_decay_days: 90
 suspicious_comm_half_life_hours: 72
+audio_half_life_hours: 72
+audio_match_window_hours: 168
+audio_max_duration_seconds: 7200
 target_flag_rate: 0.12
 min_flag_rate: 0.02
 max_flag_rate: 0.45
@@ -20,6 +25,7 @@ agent_weights:
   temporal_sequence_score: 0.20
   geospatial_score: 0.16
   communication_risk_score: 0.18
+  audio_context_score: 0.08
   novelty_drift_score: 0.18
 
 thresholds:

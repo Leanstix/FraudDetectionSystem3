@@ -42,6 +42,8 @@ def validate_json_list(name: str, rows: list[dict], required_keys: set[str]) -> 
 def validate_audio_index(rows: list[dict]) -> None:
     if not isinstance(rows, list):
         raise ValueError("audio index must be a list")
+    if not rows:
+        raise ValueError("audio directory contains no .mp3 files")
     for idx, row in enumerate(rows):
         if not isinstance(row, dict):
             raise ValueError(f"audio[{idx}] is not an object")

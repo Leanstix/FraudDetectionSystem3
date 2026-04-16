@@ -1,89 +1,89 @@
-# Reply Mirror Agent Fraud Detection (The Truman Show)
+# Reply Mirror Multimodal Fraud Detection (Deus Ex)
 
-This project is a complete, runnable, end-to-end Python solution for the Reply Mirror AI Agent Challenge on **THE TRUMAN SHOW** task.
+This repository implements a complete, runnable, end-to-end, agent-based fraud detection system for the Reply Mirror AI Agent Challenge.
 
-It uses:
-- **Reference dataset**: `The Truman Show - train.zip`
-- **Target dataset**: `The Truman Show - validation.zip`
+It is designed for train/validation pairing:
+- Reference history: `Deus Ex - train.zip`
+- Inference target: `Deus Ex - validation.zip`
 
-and produces:
-- `outputs/the_truman_show_validation_submission.txt`
-- `outputs/the_truman_show_validation_diagnostics.csv`
+It produces:
+- `outputs/deus_ex_validation_submission.txt`
+- `outputs/deus_ex_validation_diagnostics.csv`
 
-## What This Project Does
+## What The Project Does
 
-The pipeline detects suspicious transactions in the validation dataset by first learning behavioral priors from the train dataset.
+The pipeline identifies suspicious validation transactions by combining specialized agent signals over:
+- structured transactions
+- user/entity profiles
+- geospatial traces
+- SMS and mail communications
+- audio metadata (and optional transcription)
 
-Key properties:
-- Agent-based architecture with specialist components
-- Adaptive scoring with novelty and distribution-shift awareness
-- Deterministic and configurable thresholding
-- Strict ASCII submission formatting
-- Optional Langfuse + OpenRouter integration with safe fallback when LLM is disabled or unavailable
+The system is adaptive: it learns baseline behavioral priors from TRAIN and scores deviations in VALIDATION.
 
-## Why It Satisfies The Agent-Based Requirement
+## Why This Is Agent-Based
 
-The system is not a single static script. It is a coordinated multi-agent workflow:
+The solution is a cooperative multi-agent architecture, not a single static script.
 
-- `DataIngestionAgent`: loads and normalizes each dataset
-- `BaselineBuilderAgent`: learns reference priors from train
-- `EntityResolutionAgent`: links transactions to users/locations/communications
-- `TransactionBehaviorAgent`: amount/profile anomalies and reference deltas
-- `TemporalSequenceAgent`: burst and sequence anomalies with temporal priors
-- `GeoSpatialAgent`: distance and geographic novelty risk
-- `CommunicationRiskAgent`: thread-level communication risk with decay to transactions
-- `NoveltyDriftAgent`: unsupervised anomaly/drift signals
-- `FusionDecisionAgent`: weighted score fusion + deterministic bounded thresholding
-- `SubmissionWriter`: strict output validation and writing
+Agents:
+- `DataIngestionAgent`: load and normalize all modalities
+- `EntityResolutionAgent`: probabilistic user/entity linking and context joins
+- `TransactionBehaviorAgent`: amount and counterpart behavior anomalies
+- `TemporalSequenceAgent`: velocity, burst, and timing rarity anomalies
+- `GeoSpatialAgent`: residence/GPS distance and geo novelty
+- `CommunicationRiskAgent`: thread-level comm risk scoring (heuristic-first, optional LLM)
+- `AudioContextAgent`: speaker/time-linked audio risk scoring (metadata-first, optional LLM)
+- `NoveltyDriftAgent`: unsupervised novelty/outlier analysis
+- `FusionDecisionAgent`: weighted fusion + deterministic thresholding bounds
+- `SubmissionWriter`: strict ASCII submission output validation/writing
 
 ## Architecture Overview
 
-Pipeline order:
+Pipeline order (`FraudPipeline.run_pair`):
+1. Load + normalize TRAIN
+2. Load + normalize VALIDATION
+3. Entity resolution on VALIDATION
+4. Build features using TRAIN as baseline, VALIDATION as target
+5. Run specialist agents
+6. Fuse agent scores + threshold
+7. Validate + write submission TXT
+8. Write diagnostics CSV
+9. Flush tracing
 
-1. Load + normalize reference dataset
-2. Load + normalize target dataset
-3. Build baseline from reference/train
-4. Run entity resolution on target
-5. Build target features with baseline delta features
-6. Run specialist agents
-7. Fuse scores and compute threshold
-8. Validate and write submission
-9. Write diagnostics CSV
-10. Flush tracing
+## Train vs Validation Pairing
 
-## Reference vs Target Scoring Strategy
+The model does not fit only on validation.
 
-The validation set is **not** scored in isolation.
+TRAIN contributes baseline priors for:
+- sender/recipient amount behavior
+- seen sender-recipient pairs
+- seen payment methods and transaction types
+- reference hour/weekday rarity
+- geo signature context
 
-`BaselineStore` fits on train and provides:
-- sender norms (amount medians/MAD, seen methods/types)
-- recipient norms
-- sender-recipient pair priors
-- geo priors
-- hour/weekday priors
-- communication keyword priors
+VALIDATION transactions are scored as deviations from these priors plus multimodal contextual risk.
 
-Target transactions are scored against those references using features such as:
-- `ref_sender_amount_robust_z`
-- `ref_recipient_amount_robust_z`
-- `pair_seen_in_reference`
-- `payment_method_seen_by_sender_ref`
-- `transaction_type_seen_by_sender_ref`
-- `reference_hour_rarity`
-- `reference_weekday_rarity`
-- unseen indicators for method/type/location
+## Audio Handling
 
-## Langfuse + OpenRouter Integration
+Audio support is explicit and robust:
+- all `audio/*.mp3` files are indexed
+- speaker and timestamp are inferred from filename when possible
+- lightweight metadata extraction is attempted (duration, mime, size)
+- speaker-to-user linking is heuristic and tolerant to imperfect names
+- time-decayed proximity from audio events to transactions is used in scoring
 
-Integration follows the official tracking pattern:
+Transcription:
+- optional, controlled by env/config
+- metadata-only mode is default
+- missing transcription dependencies never break the pipeline
 
-- Session ID format: `{TEAM_NAME}-{ULID}`
-- LangChain config metadata contains: `{"langfuse_session_id": session_id}`
-- OpenRouter base URL: `https://openrouter.ai/api/v1`
-- Langfuse flush at end of run
-- LLM and tracing imports are lazy to avoid hard failures
+## Tracing
 
-If LLM dependencies are unavailable (or `--no-llm` is used), the pipeline still runs with heuristic communication scoring.
+`TracingManager` supports Langfuse-compatible tracing when keys and dependencies are available.
+
+- session ID format: `TEAM_NAME-ULID`
+- safe fallback when tracing packages/keys are unavailable
+- no secret values are printed
 
 ## Installation
 
@@ -93,60 +93,60 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Exact Truman Commands
+## Exact Commands
 
-Inspect both datasets:
+Inspect pair:
 
 ```bash
-python -m src.main inspect-pair --reference "The Truman Show - train.zip" --input "The Truman Show - validation.zip"
+python -m src.main inspect-pair --reference "Deus Ex - train.zip" --input "Deus Ex - validation.zip"
 ```
 
-Create validation submission:
+Generate submission:
 
 ```bash
-python -m src.main predict-pair --reference "The Truman Show - train.zip" --input "The Truman Show - validation.zip" --output "outputs/the_truman_show_validation_submission.txt"
+python -m src.main predict-pair --reference "Deus Ex - train.zip" --input "Deus Ex - validation.zip" --output "outputs/deus_ex_validation_submission.txt"
 ```
 
 Verbose mode:
 
 ```bash
-python -m src.main predict-pair --reference "The Truman Show - train.zip" --input "The Truman Show - validation.zip" --output "outputs/the_truman_show_validation_submission.txt" --verbose
+python -m src.main predict-pair --reference "Deus Ex - train.zip" --input "Deus Ex - validation.zip" --output "outputs/deus_ex_validation_submission.txt" --verbose
 ```
 
 No LLM mode:
 
 ```bash
-python -m src.main predict-pair --reference "The Truman Show - train.zip" --input "The Truman Show - validation.zip" --output "outputs/the_truman_show_validation_submission.txt" --no-llm
+python -m src.main predict-pair --reference "Deus Ex - train.zip" --input "Deus Ex - validation.zip" --output "outputs/deus_ex_validation_submission.txt" --no-llm
 ```
 
-## Outputs Produced
+## Output Files
 
-- `outputs/the_truman_show_validation_submission.txt`
-  - ASCII only
-  - one transaction ID per line
-  - deterministic ordering: `final_risk_score` desc, `transaction_id` asc
-- `outputs/the_truman_show_validation_diagnostics.csv`
-  - per-agent scores
-  - final score
-  - reasons and threshold context
+Submission TXT:
+- plain ASCII only
+- one `transaction_id` per line
+- deterministic ordering: score desc, transaction ID asc
 
-## Assumptions
+Diagnostics CSV:
+- per-agent scores and reasons
+- fusion score and threshold fields
+- sorted by risk score desc then transaction ID asc
 
-- No labels are used during scoring.
-- Entity links are heuristic and confidence-weighted.
-- Communication threads are analyzed at thread level, not per transaction.
-- Optional LLM adds signal for ambiguous/suspicious threads only.
+## Assumptions And Limitations
 
-## Limitations
+Assumptions:
+- transaction schema follows challenge columns
+- communications are semi-structured and parseable via headers/blobs
+- audio filenames contain partial speaker/time clues in many cases
 
-- Entity resolution can still miss links when IDs are sparse.
-- Temporal and geo priors are lightweight and can be refined further.
-- Current thresholding is deterministic and bounded, but not label-calibrated.
+Limitations:
+- entity linking is heuristic and may miss sparse aliases
+- transcription is optional and disabled by default
+- unsupervised anomaly signals can be sensitive to distribution drift
 
 ## Next Tuning Steps
 
-1. Add adaptive weight tuning per dataset shift profile.
-2. Add richer graph-based sender/recipient/entity risk propagation.
-3. Improve communication-to-transaction causality linking windows.
-4. Add robust drift monitors across rolling time slices.
-5. Add post-run calibration diagnostics by feature cohort.
+1. Add graph-based risk propagation across entities and communications.
+2. Improve speaker identity resolution using fuzzy matching and profile embeddings.
+3. Add richer temporal drift monitors across rolling windows.
+4. Tune fusion weights per dataset profile.
+5. Add optional local ASR confidence-aware scoring when feasible.
