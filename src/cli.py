@@ -25,7 +25,7 @@ def run_inspect_pair(reference_path: str, input_path: str, config_path: str | No
     pipeline = FraudPipeline(
         settings=settings,
         reference_path=reference_path,
-        target_path=input_path,
+        input_path=input_path,
         output_path="outputs/inspect_only.txt",
         dataset_name=dataset_name,
         no_llm=True,
@@ -42,6 +42,8 @@ def run_inspect_pair(reference_path: str, input_path: str, config_path: str | No
     print(f"target transactions: {tgt['transactions']}")
     print(f"reference users: {ref['users']}")
     print(f"target users: {tgt['users']}")
+    print(f"reference audio files: {ref['audio_files']}")
+    print(f"target audio files: {tgt['audio_files']}")
     return report
 
 
@@ -58,7 +60,7 @@ def run_predict_pair(
     pipeline = FraudPipeline(
         settings=settings,
         reference_path=reference_path,
-        target_path=input_path,
+        input_path=input_path,
         output_path=output_path,
         dataset_name=dataset_name,
         no_llm=no_llm,

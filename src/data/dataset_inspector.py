@@ -14,6 +14,7 @@ class DatasetInspector:
         locations = self.loader.load_locations()
         sms = self.loader.load_sms()
         mails = self.loader.load_mails()
+        audio = self.loader.load_audio_files()
         return {
             "dataset_name": paths.dataset_name,
             "dataset_root": paths.dataset_root,
@@ -22,6 +23,7 @@ class DatasetInspector:
             "locations": len(locations),
             "sms_threads": len(sms),
             "mail_threads": len(mails),
+            "audio_files": len(audio),
             "transaction_columns": list(tx.columns),
         }
 
